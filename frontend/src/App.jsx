@@ -15,38 +15,84 @@ import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
+  const { 
+    authUser, 
+    checkAuth, 
+    isCheckingAuth, 
+    onlineUsers,
+    connectSocket,
+    disconnectSocket
+  } = useAuthStore();
   const { theme } = useThemeStore();
 
-  console.log({ onlineUsers });
-
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    const checkAuthAndConnect = async () => {
+      try {
+        await checkAuth();
+        if (authUser) {
+          connectSocket();
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+      }
+    };
 
-  console.log({ authUser });
+    checkAuthAndConnect();
 
-  if (isCheckingAuth && !authUser)
+    return () => {
+      if (authUser) {
+        disconnectSocket();
+      }
+    };
+  }, [checkAuth, connectSocket, disconnectSocket, authUser]);
+
+  if (isCheckingAuth && !authUser) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader className="size-10 animate-spin" />
       </div>
     );
+  }
 
   return (
     <div data-theme={theme}>
       <Navbar />
-
+      
       <Routes>
-        <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
-        <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-        <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+        <Route 
+          path="/" 
+          element={authUser ? <HomePage /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/signup" 
+          element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/login" 
+          element={!authUser ? <LoginPage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/settings" 
+          element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/profile" 
+          element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />} 
+        />
       </Routes>
 
-      <Toaster />
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: theme === 'dark' ? '#333' : '#fff',
+            color: theme === 'dark' ? '#fff' : '#333',
+          },
+        }}
+      />
     </div>
   );
 };
+
 export default App;

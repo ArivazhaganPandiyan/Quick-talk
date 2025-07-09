@@ -66,14 +66,14 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    generateToken(user._id, res);
+    const token = generateToken(user._id, res); // This sets the HTTP-only cookie
 
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
-      username:user.username,
       email: user.email,
       profilePic: user.profilePic,
+      token // Also return the token in response
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
